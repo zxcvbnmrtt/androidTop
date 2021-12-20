@@ -42,7 +42,7 @@ public class FirstFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             //处理通知
-            String strClsName = getTopActivity(getActivity());
+            String strClsName = intent.getStringExtra("topActivity");
             Log.i(MyService.TAG,"Receiver One Broadcast! :" +strClsName);
         }
     };

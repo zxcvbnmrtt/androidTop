@@ -5,6 +5,8 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +24,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.sql.Time;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class MyService extends Service {
     public static final String TAG = "MyService";
@@ -75,8 +78,9 @@ public class MyService extends Service {
                     Log.i(TAG, "The obj field of msg:" + dayofyear);
                     //String strClsName = getTopActivity();
                     //Log.i(TAG, "Activity ClsName:" + strClsName);
+                    String strClsName = getTopApp();
                     Intent intent = new Intent();
-                    intent.putExtra("topActivity", "findNewTopActivity");
+                    intent.putExtra("topActivity", strClsName);
                     intent.setAction(RECEIVER_ACTION);
                     // 通知显示
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
@@ -158,6 +162,36 @@ public class MyService extends Service {
         Log.i(TAG, "pkg:"+cn.getPackageName());//包名
         Log.i(TAG, "cls:"+cn.getClassName());//包名加类名
         return cn.getClassName();
+    }
+
+    private String getTopApp() {
+        String szTopActivity = "";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            UsageStatsManager m = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
+            if (m != null) {
+                long now = System.currentTimeMillis();
+                //获取60秒之内的应用数据
+                List<UsageStats> stats = m.queryUsageStats(UsageStatsManager.INTERVAL_BEST, now - 60 * 1000, now);
+                Log.i(TAG, "Running app number in last 60 seconds : " + stats.size());
+
+                String topActivity = "";
+
+                //取得最近运行的一个app，即当前运行的app
+                if ((stats != null) && (!stats.isEmpty())) {
+                    int j = 0;
+                    for (int i = 0; i < stats.size(); i++) {
+                        if (stats.get(i).getLastTimeUsed() > stats.get(j).getLastTimeUsed()) {
+                            j = i;
+                        }
+                    }
+                    topActivity = stats.get(j).getPackageName();
+                }
+                Log.i(TAG, "top running app is : " + topActivity);
+                szTopActivity = topActivity;
+            }
+        }
+
+        return szTopActivity;
     }
 
 }
